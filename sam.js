@@ -22,12 +22,12 @@ function copyObj(src, dst) {
 function Sam() {
   var self = this;
 
-  events.EventEmitter.call(this);
+  net.Socket.call(this);
 
   self.options = copyObj(self.options);
   self.receiveBuffer = "";
 }
-util.inherits(Sam, events.EventEmitter);
+util.inherits(Sam, net.Socket);
 
 Sam.prototype.options = {
   host: 'localhost',
@@ -37,20 +37,21 @@ Sam.prototype.options = {
 Sam.prototype.connect = function (options) {
   var self = this;
 
+  self.on('data', self.handleData.bind(self));
+  self.on('end', self.handleEnd.bind(self));
+  self.on('error', self.handleError.bind(self));
+
   copyObj(options, self.options);
-  self.conn = net.createConnection(self.options, self.handleConnected.bind(self));
-  self.conn.on('data', self.handleData.bind(self));
-  self.conn.on('end', self.handleEnd.bind(self));
+  net.Socket.prototype.connect.call(self, self.options, self.handleConnected.bind(self));
 }
 
 Sam.prototype.reuseConn = function () {
   var self = this;
 
-  self.conn.removeAllListeners();
-  return self.conn;
+  self.removeAllListeners();
 }
 
-Sam.prototype.send = function (cmd, args) {
+Sam.prototype.sendCmd = function (cmd, args) {
   var self = this;
 
   cmd = cmd.concat();
@@ -60,13 +61,13 @@ Sam.prototype.send = function (cmd, args) {
 
   cmd = cmd.join(' ');
   console.log("SEND: " + cmd);
-  self.conn.write(cmd + "\n")
+  self.write(cmd + "\n")
 }
 
 Sam.prototype.handleConnected = function () {
   var self = this;
 
-  self.send(['HELLO', 'VERSION'], {MIN:'2.0', MAX:'4.0'});
+  self.sendCmd(['HELLO', 'VERSION'], {MIN:'2.0', MAX:'4.0'});
 }
 
 Sam.prototype.handleData = function (data) {
@@ -83,8 +84,8 @@ Sam.prototype.handleData = function (data) {
 Sam.prototype.handleLine = function (line) {
   var self = this;
 
-    console.log('RECEIVED: ' + line);
-  var items = line.split(" ");
+  console.log('RECEIVED: ' + line);
+  var items = line.match(/[^ "]*="(.*)"|([^ "]+)/g);
   var cmd = items.slice(0, 2);
   var args = {};
   items.slice(2).map(function (arg) {
@@ -107,7 +108,9 @@ Sam.prototype.handleEnd = function (data) {
   self.emit('end', data);
 }
 
-
+Sam.prototype.handleError = function (data) {
+  console.error(data);
+}
 
 function Session() {
   var self = this;
@@ -142,7 +145,7 @@ Session.prototype.handleCmdHelloReply = function (data) {
   }
   self.ID = args.ID;
 
-  self.send(['SESSION', 'CREATE'], args);
+  self.sendCmd(['SESSION', 'CREATE'], args);
 }
 Session.prototype.handleCmdSessionStatus = function (data) {
   var self = this;
@@ -175,19 +178,29 @@ Connection.prototype.connect = function (connection_options, session_options, sa
 Connection.prototype.handleCmdSessionStatus = function(data) {
   var self = this;
   self.connection_options.ID = self.ID;
-  self.send(['STREAM', 'CONNECT'], self.connection_options);
+  self.sendCmd(['STREAM', 'CONNECT'], self.connection_options);
 }
 
-i = new Session();
-i.on('cmdHelloReply', function (args) { console.log(["HELLO REPLY", args]); });
-i.connect({ID:'foo'});
 
-i = new Sam();
+
+session_id = 'test' + uuid();
+i = new Session();
 i.on('cmdHelloReply', function (args) {
-  var self = this;
-  self.send(["STREAM", "CONNECT", {DESTINATION: undefined, ID: 'foo'}]);
+  console.log(["SESSION", "HELLO REPLY", args]);
+
+
+  i = new Sam();
+  i.on('cmdHelloReply', function (args) {
+    var self = this;
+    self.sendCmd(["STREAM", "CONNECT"], {DESTINATION: 'foo', ID: session_id});
+  });
+/*
+  i.on('cmdStreamStatus', function (data) {
+    console.log(["STREAM", 'cmdStreamStatus', data]);
+  });
+*/
+  i.connect();
+
+
 });
-i.on('cmdStreamStatus', function (data) {
-  console.log(['cmdStreamStatus', data]);
-});
-i.connect();
+i.connect({ID:session_id});
