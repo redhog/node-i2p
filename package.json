@@ -1,0 +1,20 @@
+{
+  "name": "i2p",
+  "description": "i2p SAM bindings",
+  "version": "3.0.5",
+  "homepage": "http://github.com/redhog/node-i2p",
+  "author": {
+    "name": "RedHog",
+    "url": "http://redhog.org/"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/redhog/node-i2p.git"
+  },
+  "licenses": [
+    {
+      "type": "GPL"
+    }
+  ],
+  "main": "./main.js"
+}
