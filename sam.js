@@ -18,40 +18,72 @@ function copyObj(src, dst) {
 }
 
 
-
-function Sam() {
+function LineProtocoll() {
   var self = this;
 
   self.objId = uuid().slice(-10);
 
   net.Socket.call(self);
 
-  self.on('cmdHelloReply', self.handleCmdHelloReply.bind(self));
+  self.on('error', self.handleError.bind(self));
+  self.on('data', self.handleData.bind(self));
+
   self.options = copyObj(self.options);
   self.receiveBuffer = "";
 }
-util.inherits(Sam, net.Socket);
+util.inherits(LineProtocoll, net.Socket);
 
-Sam.prototype.options = {
+LineProtocoll.prototype.options = {
   host: 'localhost',
-  port: 7656
+  port: 0
 };
 
-Sam.prototype.connect = function (options) {
+LineProtocoll.prototype.connect = function (options) {
   var self = this;
-
-  self.on('data', self.handleData.bind(self));
-  self.on('error', self.handleError.bind(self));
 
   copyObj(options, self.options);
   net.Socket.prototype.connect.call(self, self.options, self.handleConnected.bind(self));
 }
 
-Sam.prototype.reuseConn = function () {
+LineProtocoll.prototype.reuseConn = function () {
   var self = this;
 
   self.removeAllListeners();
 }
+
+LineProtocoll.prototype.handleData = function (data) {
+  var self = this;
+
+  self.receiveBuffer += data;
+  if (self.receiveBuffer.indexOf("\n") >= 0) {
+    lines = self.receiveBuffer.split("\n");
+    self.receiveBuffer = lines.pop();
+    lines.map(function (line) { self.emit("data-line", line)});
+  }
+}
+
+LineProtocoll.prototype.handleError = function (data) {
+  var self = this;
+  console.error([self.localAddress + ":" + self.localPort, data]);
+}
+
+
+
+
+
+function Sam() {
+  var self = this;
+
+  LineProtocoll.call(self);
+  self.on('data-line', self.handleLine.bind(self));
+  self.on('cmdHelloReply', self.handleCmdHelloReply.bind(self));
+}
+util.inherits(Sam, LineProtocoll);
+
+Sam.prototype.options = {
+  host: 'localhost',
+  port: 7656
+};
 
 Sam.prototype.sendCmd = function (cmd, args) {
   var self = this;
@@ -64,23 +96,6 @@ Sam.prototype.sendCmd = function (cmd, args) {
   cmd = cmd.join(' ');
   console.log(self.localAddress + ":" + self.localPort + ": SEND: " + cmd);
   self.write(cmd + "\n")
-}
-
-Sam.prototype.handleConnected = function () {
-  var self = this;
-
-  self.sendCmd(['HELLO', 'VERSION'], {MIN:'2.0', MAX:'4.0'});
-}
-
-Sam.prototype.handleData = function (data) {
-  var self = this;
-
-  self.receiveBuffer += data;
-  if (self.receiveBuffer.indexOf("\n") >= 0) {
-    lines = self.receiveBuffer.split("\n");
-    self.receiveBuffer = lines.pop();
-    lines.map(self.handleLine.bind(self));
-  }
 }
 
 Sam.prototype.handleLine = function (line) {
@@ -103,9 +118,10 @@ Sam.prototype.handleLine = function (line) {
   }
 }
 
-Sam.prototype.handleError = function (data) {
+Sam.prototype.handleConnected = function () {
   var self = this;
-  console.error([self.localAddress + ":" + self.localPort, data]);
+
+  self.sendCmd(['HELLO', 'VERSION'], {MIN:'2.0', MAX:'4.0'});
 }
 
 Sam.prototype.handleCmdHelloReply = function (data) {
