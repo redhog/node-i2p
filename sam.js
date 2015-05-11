@@ -26,6 +26,7 @@ function Sam() {
 
   net.Socket.call(self);
 
+  self.on('cmdHelloReply', self.handleCmdHelloReply.bind(self));
   self.options = copyObj(self.options);
   self.receiveBuffer = "";
 }
@@ -107,11 +108,19 @@ Sam.prototype.handleError = function (data) {
   console.error([self.localAddress + ":" + self.localPort, data]);
 }
 
+Sam.prototype.handleCmdHelloReply = function (data) {
+  var self = this;
+
+  self.VERSION = data.VERSION;
+}
+
+
+
 function Session() {
   var self = this;
 
   Sam.call(this);
-  self.on('cmdHelloReply', self.handleCmdHelloReply.bind(self));
+  self.on("cmdSessionStatus", self.handleCmdSessionStatus.bind(self));
   self.session_options = copyObj(self.session_options);
 }
 util.inherits(Session, Sam);
@@ -132,7 +141,7 @@ Session.prototype.connect = function (session_options, sam_options) {
 Session.prototype.handleCmdHelloReply = function (data) {
   var self = this;
 
-  self.VERSION = data.VERSION;
+  Sam.prototype.handleCmdHelloReply.call(self, data);
 
   var args = copyObj(self.session_options);
   if (args.ID == undefined) {
@@ -153,27 +162,28 @@ Session.prototype.handleCmdSessionStatus = function (data) {
 function Connection() {
   var self = this;
 
-  Session.call(this);
-  self.on('cmdSessionStatus', self.handleCmdSessionStatus.bind(self));
+  Sam.call(this);
   self.connection_options = copyObj(self.connection_options);
 }
-util.inherits(Connection, Session);
+util.inherits(Connection, Sam);
 
 Connection.prototype.connection_options = {
+  ID: undefined,
   DESTINATION: undefined
 }
 
-Connection.prototype.connect = function (connection_options, session_options, sam_options) {
+Connection.prototype.connect = function (connection_options, sam_options) {
   var self = this;
 
   copyObj(connection_options, self.connection_options);
-  Session.prototype.connect.call(self, session_options, sam_options);
+  Sam.prototype.connect.call(self, sam_options);
 }
 
-Connection.prototype.handleCmdSessionStatus = function(data) {
+Connection.prototype.handleCmdHelloReply = function(data) {
   var self = this;
-  self.connection_options.ID = self.ID;
-  self.sendCmd(['STREAM', 'CONNECT'], self.connection_options);
+
+  Sam.prototype.handleCmdHelloReply.call(self, data);
+  self.sendCmd(["STREAM", "CONNECT"], self.connection_options);
 }
 
 
@@ -184,11 +194,7 @@ i.on('cmdSessionStatus', function (args) {
   console.log(["SESSION", "HELLO REPLY", args]);
 
 
-  i2 = new Sam();
-  i2.on('cmdHelloReply', function (args) {
-    var self = this;
-    self.sendCmd(["STREAM", "CONNECT"], {DESTINATION: 'foo', ID: session_id});
-  });
+  i2 = new Connection();
   i2.on('cmdStreamStatus', function (data) {
     console.log(["STREAM", 'cmdStreamStatus', data]);
   });
@@ -196,11 +202,11 @@ i.on('cmdSessionStatus', function (args) {
     console.log("CLOSED INNER");
     i.end();
   });
-  i2.connect();
+  i2.connect({ID: i.ID, DESTINATION: "foo"});
 
 
 });
 i.on("end", function (data) {
   console.log("CLOSED OUTER");
 });
-i.connect({ID:session_id});
+i.connect();
