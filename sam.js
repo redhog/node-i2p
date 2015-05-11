@@ -18,12 +18,18 @@ function copyObj(src, dst) {
 }
 
 
-function LineProtocoll() {
+function LineProtocol() {
+  var self = this;
+
+  net.Socket.call(self);
+  self.initLineProtocol();
+}
+util.inherits(LineProtocol, net.Socket);
+
+LineProtocol.prototype.initLineProtocol = function () {
   var self = this;
 
   self.objId = uuid().slice(-10);
-
-  net.Socket.call(self);
 
   self.on('error', self.handleError.bind(self));
   self.on('data', self.handleData.bind(self));
@@ -31,27 +37,27 @@ function LineProtocoll() {
   self.options = copyObj(self.options);
   self.receiveBuffer = "";
 }
-util.inherits(LineProtocoll, net.Socket);
 
-LineProtocoll.prototype.options = {
+
+LineProtocol.prototype.options = {
   host: 'localhost',
   port: 0
 };
 
-LineProtocoll.prototype.connect = function (options) {
+LineProtocol.prototype.connect = function (options) {
   var self = this;
 
   copyObj(options, self.options);
   net.Socket.prototype.connect.call(self, self.options, self.handleConnected.bind(self));
 }
 
-LineProtocoll.prototype.reuseConn = function () {
+LineProtocol.prototype.reuseConn = function () {
   var self = this;
 
   self.removeAllListeners();
 }
 
-LineProtocoll.prototype.handleData = function (data) {
+LineProtocol.prototype.handleData = function (data) {
   var self = this;
 
   self.receiveBuffer += data;
@@ -62,7 +68,7 @@ LineProtocoll.prototype.handleData = function (data) {
   }
 }
 
-LineProtocoll.prototype.handleError = function (data) {
+LineProtocol.prototype.handleError = function (data) {
   var self = this;
   console.error([self.localAddress + ":" + self.localPort, data]);
 }
@@ -74,11 +80,11 @@ LineProtocoll.prototype.handleError = function (data) {
 function Sam() {
   var self = this;
 
-  LineProtocoll.call(self);
+  LineProtocol.call(self);
   self.on('data-line', self.handleLine.bind(self));
   self.on('cmdHelloReply', self.handleCmdHelloReply.bind(self));
 }
-util.inherits(Sam, LineProtocoll);
+util.inherits(Sam, LineProtocol);
 
 Sam.prototype.options = {
   host: 'localhost',
@@ -201,6 +207,122 @@ Connection.prototype.handleCmdHelloReply = function(data) {
   Sam.prototype.handleCmdHelloReply.call(self, data);
   self.sendCmd(["STREAM", "CONNECT"], self.connection_options);
 }
+
+
+
+function Server() {
+  var self = this;
+
+  Sam.call(this);
+  self.forward_options = copyObj(self.forward_options);
+  self.forward_port = new ForwardPort();
+
+  self.on("end", self.handleEnd.bind(self));
+}
+util.inherits(Server, Sam);
+
+Server.prototype.forward_options = {
+  ID: undefined,
+  PORT: undefined
+  // , HOST: undefined
+}
+
+Server.prototype.listen = function (forward_options, sam_options, cb) {
+  var self = this;
+
+  self.forward_port.listen({}, function () {
+    var addr = self.forward_port.server.address();
+
+    copyObj(forward_options, self.forward_options);
+    self.forward_options.HOST = addr.address;
+    self.forward_options.PORT = addr.port;
+
+    Sam.prototype.connect.call(self, sam_options);
+  });
+}
+
+Server.prototype.handleCmdHelloReply = function(data) {
+  var self = this;
+
+  Sam.prototype.handleCmdHelloReply.call(self, data);
+  self.sendCmd(["STREAM", "FORWARD"], self.forward_options);
+}
+
+Server.prototype.handleEnd = function () {
+  var self = this;
+
+  self.forward_port.end();
+}
+
+
+function ForwardPort() {
+  var self = this;
+
+  self.objId = uuid().slice(-10);
+
+  net.Server.call(self);
+
+  self.on('error', self.handleError.bind(self));
+  self.on('connection', self.handleConnection.bind(self));
+
+  self.options = copyObj(self.options);
+}
+util.inherits(ForwardPort, net.Server);
+
+ForwardPort.prototype.options = {
+  host: 'localhost',
+  port: 0
+};
+
+ForwardPort.prototype.listen = function (options, cb) {
+  var self = this;
+
+  copyObj(options, self.options);
+  net.Server.prototype.connect.call(self, self.options, cb);
+}
+
+ForwardPort.prototype.handleConnection = function (socket) {
+  var self = this;
+
+  self.emit("sam-connection", ServerConnection.convert(socket));
+};
+
+
+
+function ServerConnection(connectedCb) {
+  var self = this;
+
+  LineProtocol.call(self);
+  self.initServerConnection(connectedCb);
+}
+util.inherits(ServerConnection, LineProtocol);
+
+ServerConnection.convert = function(socket, connectedCb) {
+  var self = socket;
+
+  self.constructor = ServerConnection;
+  self.__proto__ = ServerConnection.prototype;
+
+  self.initLineProtocol();
+  self.initServerConnection(connectedCb);
+
+  return self;
+}
+
+ServerConnection.prototype.initServerConnection = function (connectedCb) {
+  var self = this;
+  self.connectedCb = connectedCb;
+  self.on("data-line", self.handleLine.bind(self));
+}
+
+ServerConnection.prototype.handleLine = function (address) {
+  var self = this;
+
+  self.DESTINATION = address;
+  self.reuseConn();
+  self.connectedCb();
+}
+
 
 
 
