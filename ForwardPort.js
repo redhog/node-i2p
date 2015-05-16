@@ -27,11 +27,15 @@ module.exports.prototype.options = {
   port: 0
 };
 
+module.exports.prototype.handleError = LineProtocol.prototype.handleError;
+
 module.exports.prototype.listen = function (options, cb) {
   var self = this;
 
   i2putil.copyObj(options, self.options);
-  net.Server.prototype.connect.call(self, self.options, cb);
+  // FIXME: Node 0.12 makes it possible to send self.options and cb straight to listen(), but I'm running 0.10 :(
+  if (cb) self.on("listening", cb);
+  net.Server.prototype.listen.call(self, self.options.port, self.options.host);
 }
 
 module.exports.prototype.handleConnection = function (socket) {

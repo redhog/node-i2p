@@ -1,9 +1,3 @@
-var net = require('net');
-var util = require('util');
-var events = require("events");
-var uuid = require("node-uuid");
-var i2putil = require("./i2putil");
-
 var LineProtocol = require("./LineProtocol");
 var Sam = require("./Sam");
 var Session = require("./Session");
@@ -13,26 +7,72 @@ var ServerConnection = require("./ServerConnection");
 var ForwardPort = require("./ForwardPort");
 var Server = require("./Server");
 
+function setupClient(destination) {
+  client_session = new Session();
+  client_session.on('cmdSessionStatus', function (args) {
+    console.log(["client_session.cmdSessionStatus", args]);
 
-session_id = 'test' + uuid();
-i = new Session();
-i.on('cmdSessionStatus', function (args) {
-  console.log(["SESSION", "HELLO REPLY", args]);
+
+    client = new Connection();
+    client.on('cmdStreamStatus', function (data) {
+      console.log(["client.cmdStreamStatus", data]);
+
+      client.reuseConn();
+      client.on('data', function (data) {
+        console.log(["client.data", data]);
+      });
+      client.on("end", function (data) {
+        console.log("client.end2");
+        client_session.end();
+      });
+
+      client.write("Hello NSA world");
+    });
+    client.on("end", function (data) {
+      console.log("client.end");
+      client_session.end();
+    });
+    client.connect({ID: client_session.ID, DESTINATION: destination});
 
 
-  i2 = new Connection();
-  i2.on('cmdStreamStatus', function (data) {
-    console.log(["STREAM", 'cmdStreamStatus', data]);
   });
-  i2.on("end", function (data) {
-    console.log("CLOSED INNER");
-    i.end();
+  client_session.on("end", function (data) {
+    console.log("client_session.end");
   });
-  i2.connect({ID: i.ID, DESTINATION: "foo"});
+  client_session.connect();
+}
 
 
-});
-i.on("end", function (data) {
-  console.log("CLOSED OUTER");
-});
-i.connect();
+
+function setupServer() {
+  server_session= new Session();
+  server_session.on('cmdSessionStatus', function (args) {
+    console.log(["server_session.cmdSessionStatus", args]);
+    var server = new Server();
+    server.on('listening', function () {
+      setupClient(server.DESTINATION);
+    });
+    server.on('connection', function (socket) {
+      socket.on('error', function (err) {
+        console.err(["server.connection.error", err]);
+        socket.end();
+      });
+      socket.on('end', function () {
+        console.err("server.connection.end");
+      });
+      socket.on('data', function (data) {
+        console.log(["server.connection.data", data]);
+        socket.write("COPY: " + data + "\n");
+      });
+    });
+
+    server.listen({ID: server_session.ID});
+  });
+  server_session.on("end", function (data) {
+    console.log("server_session.end");
+  });
+  server_session.connect();
+}
+
+
+setupServer();
