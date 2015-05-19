@@ -41,5 +41,8 @@ module.exports.prototype.listen = function (options, cb) {
 module.exports.prototype.handleConnection = function (socket) {
   var self = this;
 
-  self.emit("sam-connection", ServerConnection.convert(socket));
+  ServerConnection.convert(socket, function () {
+    self.emit("sam-connection", socket);
+  });
 };
+

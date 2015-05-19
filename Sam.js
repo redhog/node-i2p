@@ -26,6 +26,15 @@ module.exports.prototype.sendCmd = function (cmd, args) {
 
   cmd = cmd.concat();
   for (var key in args) {
+    if (args[key] == undefined || args[key] == null) {
+      throw {
+        args: args,
+        key: key,
+        toString: function () {
+          return "Value can not be undefined or null for " + this.key + " in " + JSON.stringify(this.args);
+        }
+      }
+    }
     cmd.push(key + "=" + args[key].toString());
   }
 

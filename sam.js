@@ -16,7 +16,6 @@ function setupClient(destination) {
     client = new Connection();
     client.on('cmdStreamStatus', function (data) {
       console.log(["client.cmdStreamStatus", data]);
-
       client.reuseConn();
       client.on('data', function (data) {
         console.log(["client.data", data]);
@@ -26,7 +25,8 @@ function setupClient(destination) {
         client_session.end();
       });
 
-      client.write("Hello NSA world");
+      client.write("Hello NSA world\n");
+      console.log("client.sendHelloWorld");
     });
     client.on("end", function (data) {
       console.log("client.end");
@@ -50,9 +50,12 @@ function setupServer() {
     console.log(["server_session.cmdSessionStatus", args]);
     var server = new Server();
     server.on('listening', function () {
-      setupClient(server.DESTINATION);
+      console.log(["server.listening", server_session.DESTINATION]);
+      setupClient(server_session.DESTINATION);
     });
     server.on('connection', function (socket) {
+      console.log("server.connection");
+
       socket.on('error', function (err) {
         console.err(["server.connection.error", err]);
         socket.end();
@@ -64,6 +67,9 @@ function setupServer() {
         console.log(["server.connection.data", data]);
         socket.write("COPY: " + data + "\n");
       });
+
+      socket.write("ORIG: Hello my children\n");
+      console.log("server.sendHelloWorld");
     });
 
     server.listen({ID: server_session.ID});

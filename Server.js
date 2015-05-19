@@ -17,6 +17,7 @@ module.exports = function() {
 
   self.forward_port.on('sam-connection', self.emit.bind(self, "connection"));
 
+  self.on("cmdStreamStatus", self.emit.bind(self, "listening"));
   self.on("end", self.handleEnd.bind(self));
 }
 util.inherits(module.exports, Sam);
@@ -31,9 +32,9 @@ module.exports.prototype.listen = function (forward_options, sam_options) {
   var self = this;
 
   self.forward_port.listen({}, function () {
-    var addr = self.address();
+    var addr = self.forward_port.address();
 
-      console.log(['FORWARD PORT', addr]);
+    console.log(['FORWARD PORT', addr]);
 
     i2putil.copyObj(forward_options, self.forward_options);
     self.forward_options.HOST = addr.address;
@@ -48,9 +49,6 @@ module.exports.prototype.handleCmdHelloReply = function(data) {
 
   Sam.prototype.handleCmdHelloReply.call(self, data);
   self.sendCmd(["STREAM", "FORWARD"], self.forward_options);
-}
-module.exports.prototype.handleCmdStreamStatus = function(data) {
-  self.emit("listening");
 }
 
 module.exports.prototype.handleEnd = function () {
