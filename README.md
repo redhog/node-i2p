@@ -5,7 +5,7 @@ This module implements the https://nodejs.org/api/net.html API for the https://g
 Usage:
 
     require("i2p");
-    net = require("i2p");
+    net = require("net");
 
     conn = net.createConnection({DESTINATION:"long i2p destination string"}, function () {
       console.log("connected");
