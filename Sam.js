@@ -40,7 +40,7 @@ module.exports.prototype.sendCmd = function (cmd, args) {
 
   cmd = cmd.join(' ');
   console.log(self.localAddress + ":" + self.localPort + ": SEND: " + cmd);
-  self.write(cmd + "\n")
+  self.writeLine(cmd)
 }
 
 module.exports.prototype.handleLine = function (line) {

@@ -13,6 +13,7 @@ module.exports = function() {
   var self = this;
 
   Sam.call(this);
+  self.on('cmdStreamStatus', self.handleCmdStreamStatus.bind(self));
   self.connection_options = i2putil.copyObj(self.connection_options);
 }
 util.inherits(module.exports, Sam);
@@ -34,4 +35,11 @@ module.exports.prototype.handleCmdHelloReply = function(data) {
 
   Sam.prototype.handleCmdHelloReply.call(self, data);
   self.sendCmd(["STREAM", "CONNECT"], self.connection_options);
+}
+
+module.exports.prototype.handleCmdStreamStatus = function(data) {
+  var self = this;
+  client.reuseConn();
+
+  self.emit("connect");
 }
