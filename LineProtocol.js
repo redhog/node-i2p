@@ -6,21 +6,18 @@ var uuid = require("node-uuid");
 var i2putil = require("./i2putil");
 
 
-module.exports = function() {
+module.exports = function(conn) {
   var self = this;
 
   stream.Duplex.call(self);
 
-  self.initLineProtocol();
-}
-util.inherits(module.exports, stream.Duplex);
-
-module.exports.prototype.initLineProtocol = function () {
-  var self = this;
+  if (conn == undefined) {
+    conn = new net.Socket();
+  }
+  self._conn = conn;
 
   self.objId = uuid().slice(-10);
 
-  self._conn = new net.Socket();
   self._conn.on('error', self.handleError.bind(self));
   self._conn.on('data', self.handleData.bind(self));
   self._conn.on('end', self.handleEnd.bind(self));
@@ -29,7 +26,7 @@ module.exports.prototype.initLineProtocol = function () {
   self.receiveBuffer = "";
   self.reused = false;
 }
-
+util.inherits(module.exports, stream.Duplex);
 
 module.exports.prototype.options = {
   host: 'localhost',

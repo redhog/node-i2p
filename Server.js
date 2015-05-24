@@ -36,8 +36,6 @@ module.exports.prototype.listen = function (forward_options, sam_options) {
     function () {
       var addr = self.forward_port.address();
 
-      console.log(['FORWARD PORT', addr]);
-
       i2putil.copyObj(forward_options, self.forward_options);
       self.forward_options.HOST = addr.address;
       self.forward_options.PORT = addr.port;
@@ -51,8 +49,8 @@ module.exports.prototype.listen = function (forward_options, sam_options) {
 module.exports.prototype.handleConnection = function (socket) {
   var self = this;
 
-  ServerConnection.convert(socket, function () {
-    self.emit("connection", socket);
+  server_connection = new ServerConnection(socket, function () {
+    self.emit("connection", server_connection);
   });
 };
 

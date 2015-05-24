@@ -2,8 +2,8 @@ var Session = require("../Session");
 var Connection = require("../Connection");
 
 client_session = new Session();
-client_session.on('cmdSessionStatus', function (args) {
-  console.log(["client_session.cmdSessionStatus", args]);
+client_session.on('connect', function (args) {
+  console.log("client_session.connect");
 
 
   client = new Connection();

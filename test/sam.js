@@ -1,16 +1,11 @@
-var LineProtocol = require("./LineProtocol");
-var Sam = require("./Sam");
-var Session = require("./Session");
-var Connection = require("./Connection");
-
-var ServerConnection = require("./ServerConnection");
-var ForwardPort = require("./ForwardPort");
-var Server = require("./Server");
+var Session = require("../Session");
+var Connection = require("../Connection");
+var Server = require("../Server");
 
 function setupClient(destination) {
   client_session = new Session();
-  client_session.on('cmdSessionStatus', function (args) {
-    console.log(["client_session.cmdSessionStatus", args]);
+  client_session.on('connect', function () {
+    console.log("client_session.connect");
 
 
     client = new Connection();
@@ -39,8 +34,8 @@ function setupClient(destination) {
 
 function setupServer() {
   server_session= new Session();
-  server_session.on('cmdSessionStatus', function (args) {
-    console.log(["server_session.cmdSessionStatus", args]);
+  server_session.on('connect', function () {
+    console.log("server_session.connect");
     var server = new Server();
     server.on('listening', function () {
       console.log(["server.listening", server_session.DESTINATION]);

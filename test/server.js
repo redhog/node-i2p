@@ -3,8 +3,8 @@ var Server = require("../Server");
 
 
 server_session= new Session();
-server_session.on('cmdSessionStatus', function (args) {
-  console.log(["server_session.cmdSessionStatus", args]);
+server_session.on('connect', function (args) {
+  console.log("server_session.connect");
 
   var server = new Server();
   server.on('listening', function () {

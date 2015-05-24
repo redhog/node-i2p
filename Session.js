@@ -13,6 +13,7 @@ module.exports = function() {
 
   Sam.call(this);
   self.on("cmdSessionStatus", self.handleCmdSessionStatus.bind(self));
+  self.on("cmdNamingReply", self.handleCmdNamingReply.bind(self));
   self.session_options = i2putil.copyObj(self.session_options);
 }
 util.inherits(module.exports, Sam);
@@ -43,8 +44,17 @@ module.exports.prototype.handleCmdHelloReply = function (data) {
 
   self.sendCmd(['SESSION', 'CREATE'], args);
 }
+
 module.exports.prototype.handleCmdSessionStatus = function (data) {
   var self = this;
 
-  self.DESTINATION = data.DESTINATION;
+  self.PRIVKEY = data.DESTINATION;
+  self.sendCmd(['NAMING', 'LOOKUP'], {NAME: 'ME'});
+}
+
+module.exports.prototype.handleCmdNamingReply = function (data) {
+  var self = this;
+
+  self.DESTINATION = data.VALUE;
+  self.emit("connect");
 }
