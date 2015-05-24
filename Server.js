@@ -5,17 +5,17 @@ var uuid = require("node-uuid");
 var i2putil = require("./i2putil");
 
 var Sam = require("./Sam");
-var ForwardPort = require("./ForwardPort");
-
+var ServerConnection = require("./ServerConnection");
 
 module.exports = function() {
   var self = this;
 
   Sam.call(this);
   self.forward_options = i2putil.copyObj(self.forward_options);
-  self.forward_port = new ForwardPort();
 
-  self.forward_port.on('sam-connection', self.emit.bind(self, "connection"));
+  self.forward_port = new net.Server();
+  self.forward_port.on('error', self.emit.bind(self, "error"));
+  self.forward_port.on('connection', self.handleConnection.bind(self));
 
   self.on("cmdStreamStatus", self.emit.bind(self, "listening"));
   self.on("end", self.handleEnd.bind(self));
@@ -31,18 +31,31 @@ module.exports.prototype.forward_options = {
 module.exports.prototype.listen = function (forward_options, sam_options) {
   var self = this;
 
-  self.forward_port.listen({}, function () {
-    var addr = self.forward_port.address();
+  self.forward_port.listen(
+    0, 'localhost',
+    function () {
+      var addr = self.forward_port.address();
 
-    console.log(['FORWARD PORT', addr]);
+      console.log(['FORWARD PORT', addr]);
 
-    i2putil.copyObj(forward_options, self.forward_options);
-    self.forward_options.HOST = addr.address;
-    self.forward_options.PORT = addr.port;
+      i2putil.copyObj(forward_options, self.forward_options);
+      self.forward_options.HOST = addr.address;
+      self.forward_options.PORT = addr.port;
 
-    Sam.prototype.connect.call(self, sam_options);
-  });
+      Sam.prototype.connect.call(self, sam_options);
+    }
+  );
 }
+
+
+module.exports.prototype.handleConnection = function (socket) {
+  var self = this;
+
+  ServerConnection.convert(socket, function () {
+    self.emit("connection", socket);
+  });
+};
+
 
 module.exports.prototype.handleCmdHelloReply = function(data) {
   var self = this;

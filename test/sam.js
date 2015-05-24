@@ -14,19 +14,12 @@ function setupClient(destination) {
 
 
     client = new Connection();
-    client.on('cmdStreamStatus', function (data) {
-      console.log(["client.cmdStreamStatus", data]);
-      client.reuseConn();
-      client.on('data', function (data) {
-        console.log(["client.data", data]);
-      });
-      client.on("end", function (data) {
-        console.log("client.end2");
-        client_session.end();
-      });
-
+    client.on('connect', function (data) {
+      console.log(["client.connect", data]);
       client.write("Hello NSA world\n");
-      console.log("client.sendHelloWorld");
+    });
+    client.on('data', function (data) {
+      console.log(["client.data", data]);
     });
     client.on("end", function (data) {
       console.log("client.end");

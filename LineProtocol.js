@@ -10,7 +10,6 @@ module.exports = function() {
   var self = this;
 
   stream.Duplex.call(self);
-  self._conn = new net.Socket();
 
   self.initLineProtocol();
 }
@@ -21,6 +20,7 @@ module.exports.prototype.initLineProtocol = function () {
 
   self.objId = uuid().slice(-10);
 
+  self._conn = new net.Socket();
   self._conn.on('error', self.handleError.bind(self));
   self._conn.on('data', self.handleData.bind(self));
   self._conn.on('end', self.handleEnd.bind(self));
