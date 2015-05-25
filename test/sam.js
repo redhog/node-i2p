@@ -9,7 +9,7 @@ function setupClient(destination) {
     client.write("Hello NSA world\n");
   });
   client.on('data', function (data) {
-    console.log(["client.data", data]);
+    console.log(["client.data", data.toString("utf-8")]);
   });
   client.on("end", function (data) {
     console.log("client.end");
@@ -21,39 +21,31 @@ function setupClient(destination) {
 
 
 function setupServer() {
-  server_session= new Session();
-  server_session.on('connect', function () {
-    console.log("server_session.connect");
-    var server = new Server();
-    server.on('listening', function () {
-      console.log(["server.listening", server_session.DESTINATION]);
-      setupClient(server_session.DESTINATION);
+  var server = new Server();
+  server.on('listening', function () {
+    console.log(["server.listening", server.session.DESTINATION]);
+    setupClient(server.session.DESTINATION);
+  });
+  server.on('connection', function (socket) {
+    console.log("server.connection");
+
+    socket.on('error', function (err) {
+      console.err(["server.connection.error", err]);
+      socket.end();
     });
-    server.on('connection', function (socket) {
-      console.log("server.connection");
-
-      socket.on('error', function (err) {
-        console.err(["server.connection.error", err]);
-        socket.end();
-      });
-      socket.on('end', function () {
-        console.err("server.connection.end");
-      });
-      socket.on('data', function (data) {
-        console.log(["server.connection.data", data]);
-        socket.write("COPY: " + data + "\n");
-      });
-
-      socket.write("ORIG: Hello my children\n");
-      console.log("server.sendHelloWorld");
+    socket.on('end', function () {
+      console.err("server.connection.end");
+    });
+    socket.on('data', function (data) {
+      console.log(["server.connection.data", data.toString("utf-8")]);
+      socket.write("COPY: " + data + "\n");
     });
 
-    server.listen({ID: server_session.ID});
+    socket.write("ORIG: Hello my children\n");
+    console.log("server.sendHelloWorld");
   });
-  server_session.on("end", function (data) {
-    console.log("server_session.end");
-  });
-  server_session.connect();
+
+  server.listen({});
 }
 
 

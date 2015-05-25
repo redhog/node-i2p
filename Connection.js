@@ -29,8 +29,8 @@ module.exports.prototype.connect = function (connection_options, sam_options) {
   i2putil.copyObj(connection_options, self.connection_options);
 
   var session_options = {};
-  if (connection_options.ID != undefined) session_options.ID = connection_options.ID;
-  if (connection_options.LOCAL_DESTINATION != undefined) session_options.DESTINATION = connection_options.LOCAL_DESTINATION;
+  if (self.connection_options.ID != undefined) session_options.ID = self.connection_options.ID;
+  if (self.connection_options.LOCAL_DESTINATION != undefined) session_options.DESTINATION = self.connection_options.LOCAL_DESTINATION;
 
   SessionManager.getSession(session_options, function (session) {
     self.session = session;

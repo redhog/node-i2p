@@ -4,26 +4,20 @@ var events = require("events");
 var uuid = require("node-uuid");
 var i2putil = require("./i2putil");
 
-var Sam = require("./Sam");
-var ServerConnection = require("./ServerConnection");
+var BaseServer = require("./BaseServer");
+var SessionManager = require("./SessionManager");
 
 module.exports = function() {
   var self = this;
 
-  Sam.call(this);
+  BaseServer.call(this);
   self.forward_options = i2putil.copyObj(self.forward_options);
-
-  self.forward_port = new net.Server();
-  self.forward_port.on('error', self.emit.bind(self, "error"));
-  self.forward_port.on('connection', self.handleConnection.bind(self));
-
-  self.on("cmdStreamStatus", self.emit.bind(self, "listening"));
-  self.on("end", self.handleEnd.bind(self));
 }
-util.inherits(module.exports, Sam);
+util.inherits(module.exports, BaseServer);
 
 module.exports.prototype.forward_options = {
-  ID: undefined,
+  // ID: undefined,
+  // LOCAL_DESTINATION: undefined,
   PORT: undefined
   // , HOST: undefined
 }
@@ -31,39 +25,24 @@ module.exports.prototype.forward_options = {
 module.exports.prototype.listen = function (forward_options, sam_options) {
   var self = this;
 
-  self.forward_port.listen(
-    0, 'localhost',
-    function () {
-      var addr = self.forward_port.address();
+  i2putil.copyObj(forward_options, self.forward_options);
 
-      i2putil.copyObj(forward_options, self.forward_options);
-      self.forward_options.HOST = addr.address;
-      self.forward_options.PORT = addr.port;
+  var session_options = {};
+  if (self.forward_options.ID != undefined) session_options.ID = self.forward_options.ID;
+  if (self.forward_options.LOCAL_DESTINATION != undefined) session_options.DESTINATION = self.forward_options.LOCAL_DESTINATION;
 
-      Sam.prototype.connect.call(self, sam_options);
-    }
-  );
-}
-
-
-module.exports.prototype.handleConnection = function (socket) {
-  var self = this;
-
-  server_connection = new ServerConnection(socket, function () {
-    self.emit("connection", server_connection);
+  SessionManager.getSession(session_options, function (session) {
+    self.session = session;
+    base_forward_options = {ID: self.session.ID};
+    if (self.forward_options.PORT != undefined) base_forward_options.PORT = self.forward_options.PORT;
+    if (self.forward_options.HOST != undefined) base_forward_options.HOST = self.forward_options.HOST;
+    BaseServer.prototype.listen.call(self, base_forward_options, sam_options);
   });
-};
-
-
-module.exports.prototype.handleCmdHelloReply = function(data) {
-  var self = this;
-
-  Sam.prototype.handleCmdHelloReply.call(self, data);
-  self.sendCmd(["STREAM", "FORWARD"], self.forward_options);
 }
 
 module.exports.prototype.handleEnd = function () {
   var self = this;
 
-  self.forward_port.end();
+  BaseServer.prototype.handleEnd.call(this);
+  SessionManager.releaseSession(self.session.ID);
 }
