@@ -4,22 +4,22 @@ var events = require("events");
 var uuid = require("node-uuid");
 var i2putil = require("./i2putil");
 
-var LineProtocol = require("./LineProtocol");
-var Sam = require("./Sam");
+var BaseConnection = require("./BaseConnection");
+var SessionManager = require("./SessionManager");
 
 
 
 module.exports = function() {
   var self = this;
 
-  Sam.call(this);
-  self.on('cmdStreamStatus', self.handleCmdStreamStatus.bind(self));
+  BaseConnection.call(this);
   self.connection_options = i2putil.copyObj(self.connection_options);
 }
-util.inherits(module.exports, Sam);
+util.inherits(module.exports, BaseConnection);
 
 module.exports.prototype.connection_options = {
-  ID: undefined,
+  // ID: undefined,
+  // LOCAL_DESTINATION: undefined,
   DESTINATION: undefined
 }
 
@@ -27,19 +27,21 @@ module.exports.prototype.connect = function (connection_options, sam_options) {
   var self = this;
 
   i2putil.copyObj(connection_options, self.connection_options);
-  Sam.prototype.connect.call(self, sam_options);
+
+  var session_options = {};
+  if (connection_options.ID != undefined) session_options.ID = connection_options.ID;
+  if (connection_options.LOCAL_DESTINATION != undefined) session_options.DESTINATION = connection_options.LOCAL_DESTINATION;
+
+  SessionManager.getSession(session_options, function (session) {
+    self.session = session;
+    base_connection_options = {ID: self.session.ID, DESTINATION: connection_options.DESTINATION};
+    BaseConnection.prototype.connect.call(self, base_connection_options, sam_options);
+  });
 }
 
-module.exports.prototype.handleCmdHelloReply = function(data) {
+module.exports.prototype.handleEnd = function() {
   var self = this;
 
-  Sam.prototype.handleCmdHelloReply.call(self, data);
-  self.sendCmd(["STREAM", "CONNECT"], self.connection_options);
-}
-
-module.exports.prototype.handleCmdStreamStatus = function(data) {
-  var self = this;
-  client.reuseConn();
-
-  self.emit("connect");
+  BaseConnection.prototype.handleEnd.call(self);
+  SessionManager.releaseSession(self.session.ID);
 }

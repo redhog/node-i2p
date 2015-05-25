@@ -3,31 +3,19 @@ var Connection = require("../Connection");
 var Server = require("../Server");
 
 function setupClient(destination) {
-  client_session = new Session();
-  client_session.on('connect', function () {
-    console.log("client_session.connect");
-
-
-    client = new Connection();
-    client.on('connect', function (data) {
-      console.log(["client.connect", data]);
-      client.write("Hello NSA world\n");
-    });
-    client.on('data', function (data) {
-      console.log(["client.data", data]);
-    });
-    client.on("end", function (data) {
-      console.log("client.end");
-      client_session.end();
-    });
-    client.connect({ID: client_session.ID, DESTINATION: destination});
-
-
+  client = new Connection();
+  client.on('connect', function (data) {
+    console.log(["client.connect", data]);
+    client.write("Hello NSA world\n");
   });
-  client_session.on("end", function (data) {
-    console.log("client_session.end");
+  client.on('data', function (data) {
+    console.log(["client.data", data]);
   });
-  client_session.connect();
+  client.on("end", function (data) {
+    console.log("client.end");
+    client_session.end();
+  });
+  client.connect({DESTINATION: destination});
 }
 
 

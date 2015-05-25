@@ -25,6 +25,8 @@ module.exports = function(conn) {
   self.options = i2putil.copyObj(self.options);
   self.receiveBuffer = "";
   self.reused = false;
+
+  self.references = 1;
 }
 util.inherits(module.exports, stream.Duplex);
 
@@ -98,4 +100,19 @@ module.exports.prototype._write = function (chunk, encoding, callback) {
   var self = this;
 
   self._conn.write(chunk, callback);
+}
+
+module.exports.prototype.reference = function () {
+  var self = this;
+
+  self.references++;
+}
+
+module.exports.prototype.dereference = function () {
+  var self = this;
+
+  self.references--;
+  if (!self.references) {
+    self.end();
+  }
 }
