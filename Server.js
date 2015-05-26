@@ -18,8 +18,8 @@ util.inherits(module.exports, BaseServer);
 module.exports.prototype.forward_options = {
   // ID: undefined,
   // LOCAL_DESTINATION: undefined,
-  PORT: undefined
-  // , HOST: undefined
+  // PORT: undefined,
+  // HOST: undefined
 }
 
 module.exports.prototype.listen = function (forward_options, sam_options) {

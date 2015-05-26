@@ -1,10 +1,8 @@
-var Session = require("../Session");
-var Connection = require("../Connection");
-var Server = require("../Server");
+
+var i2p = require("i2p");
 
 function setupClient(destination) {
-  client = new Connection();
-  client.on('connect', function (data) {
+  client = i2p.createConnection({DESTINATION: destination}, function (data) {
     console.log(["client.connect", data]);
     client.write("Hello NSA world\n");
   });
@@ -21,13 +19,13 @@ function setupClient(destination) {
 
 
 function setupServer() {
-  var server = new Server();
+  var server = i2p.createServer();
   server.on('listening', function () {
     console.log(["server.listening", server.session.DESTINATION]);
     setupClient(server.session.DESTINATION);
   });
   server.on('connection', function (socket) {
-    console.log("server.connection");
+    console.log(["server.connection", socket.DESTINATION]);
 
     socket.on('error', function (err) {
       console.err(["server.connection.error", err]);
