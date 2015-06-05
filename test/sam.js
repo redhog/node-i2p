@@ -1,19 +1,22 @@
-
 var i2p = require("i2p");
+var Session = require("../Session");
+var Connection = require("../Connection");
 
-function setupClient(destination) {
-  client = i2p.createConnection({DESTINATION: destination}, function (data) {
-    console.log(["client.connect", data]);
+function setupClient(server) {
+  var count = 0;
+  client = i2p.createConnection({DESTINATION: server.session.DESTINATION}, function () {
+    console.log("client.connect");
     client.write("Hello NSA world\n");
   });
   client.on('data', function (data) {
-    console.log(["client.data", data.toString("utf-8")]);
+    console.log("client.data: " + data.toString("utf-8"));
+    count++;
+    if (count > 1) client.end();
   });
   client.on("end", function (data) {
     console.log("client.end");
-    client_session.end();
+    server.end();
   });
-  client.connect({DESTINATION: destination});
 }
 
 
@@ -21,21 +24,21 @@ function setupClient(destination) {
 function setupServer() {
   var server = i2p.createServer();
   server.on('listening', function () {
-    console.log(["server.listening", server.session.DESTINATION]);
-    setupClient(server.session.DESTINATION);
+    console.log("server.listening: " + server.session.DESTINATION);
+    setupClient(server);
   });
   server.on('connection', function (socket) {
-    console.log(["server.connection", socket.DESTINATION]);
+    console.log("server.connection: " + socket.DESTINATION);
 
     socket.on('error', function (err) {
-      console.err(["server.connection.error", err]);
+      console.error(["server.connection.error", err]);
       socket.end();
     });
     socket.on('end', function () {
-      console.err("server.connection.end");
+      console.error("server.connection.end");
     });
     socket.on('data', function (data) {
-      console.log(["server.connection.data", data.toString("utf-8")]);
+      console.log("server.connection.data: " + data.toString("utf-8"));
       socket.write("COPY: " + data + "\n");
     });
 
