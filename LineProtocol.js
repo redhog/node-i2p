@@ -21,6 +21,7 @@ module.exports = function(conn) {
   self._conn.on('error', self.handleError.bind(self));
   self._conn.on('data', self.handleData.bind(self));
   self._conn.on('end', self.handleEnd.bind(self));
+  self.on('finish', self.handleFinish.bind(self));
 
   self.options = i2putil.copyObj(self.options);
   self.receiveBuffer = "";
@@ -95,6 +96,12 @@ module.exports.prototype.handleEnd = function () {
 
   if (self.debug) console.error([self._conn.localAddress + ":" + self._conn.localPort + ".end", data]);
   self.push(null);
+}
+
+module.exports.prototype.handleFinish = function () {
+  var self = this;
+
+  self._conn.end();
 }
 
 module.exports.prototype._read = function(size) {

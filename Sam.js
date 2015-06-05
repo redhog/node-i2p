@@ -57,6 +57,7 @@ module.exports.prototype.handleLine = function (line) {
     args[key] = value;
   });
   if (args.RESULT != undefined && args.RESULT != 'OK') {
+      console.error(["ERROR", self, {cmd:cmd, args:args}]);
     self.emit('error', {cmd:cmd, args:args});
   } else {
     self.emit('cmd' + cmd.map(i2putil.strToTitle).join(""), args);

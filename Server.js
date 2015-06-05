@@ -44,5 +44,5 @@ module.exports.prototype.handleEnd = function () {
   var self = this;
 
   BaseServer.prototype.handleEnd.call(this);
-  SessionManager.releaseSession(self.session.ID);
+  SessionManager.releaseSession(self.session);
 }

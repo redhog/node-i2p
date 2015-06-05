@@ -45,6 +45,10 @@ module.exports.prototype.listen = function (base_forward_options, sam_options) {
   );
 }
 
+module.exports.prototype.close = function () {
+  var self = this;
+  self.end();
+}
 
 module.exports.prototype.handleConnection = function (socket) {
   var self = this;
@@ -65,5 +69,6 @@ module.exports.prototype.handleCmdHelloReply = function(data) {
 module.exports.prototype.handleEnd = function () {
   var self = this;
 
-  self.forward_port.end();
+  self.forward_port.close();
 }
+
