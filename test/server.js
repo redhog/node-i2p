@@ -1,36 +1,27 @@
-var Session = require("../Session");
-var Server = require("../Server");
+var i2p = require("i2p");
 
 
-server_session= new Session();
-server_session.on('connect', function (args) {
-  console.log("server_session.connect");
+var server = i2p.createServer();
+server.on('listening', function () {
+  console.log("server.listening: " + server.session.DESTINATION);
+});
+server.on('connection', function (socket) {
+  console.log("server.connection: " + socket.DESTINATION);
 
-  var server = new Server();
-  server.on('listening', function () {
-    console.log(["server.listening", server_session.DESTINATION]);
+  socket.on('error', function (err) {
+    console.error(["server.connection.error", err]);
+    socket.end();
   });
-  server.on('connection', function (socket) {
-    console.log("server.connection");
-
-    socket.on('error', function (err) {
-      console.log(["server.connection.error", err]);
-      socket.end();
-    });
-    socket.on('end', function () {
-      console.log("server.connection.end");
-    });
-    socket.on('data', function (data) {
-      console.log(["server.connection.data", data]);
-      socket.write("COPY: " + data + "\n");
-    });
-
-    socket.write("ORIG: Hello my children\n");
+  socket.on('end', function () {
+    console.error("server.connection.end");
+  });
+  socket.on('data', function (data) {
+    console.log("server.connection.data: " + data.toString("utf-8"));
+    socket.write("COPY: " + data + "\n");
   });
 
-  server.listen({ID: server_session.ID});
+  socket.write("ORIG: Hello my children\n");
+  console.log("server.sendHelloWorld");
 });
-server_session.on("end", function (data) {
-  console.log("server_session.end");
-});
-server_session.connect();
+
+server.listen({});
