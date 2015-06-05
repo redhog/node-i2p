@@ -39,14 +39,14 @@ module.exports.prototype.sendCmd = function (cmd, args) {
   }
 
   cmd = cmd.join(' ');
-  console.log(self.localAddress + ":" + self.localPort + ": SEND: " + cmd);
+  if (self.debug) console.log(self.localAddress + ":" + self.localPort + ": SEND: " + cmd);
   self.writeLine(cmd)
 }
 
 module.exports.prototype.handleLine = function (line) {
   var self = this;
 
-  console.log(self.localAddress + ":" + self.localPort + ': RECEIVED: ' + line);
+  if (self.debug) console.log(self.localAddress + ":" + self.localPort + ': RECEIVED: ' + line);
   var items = line.match(/[^ "]*="(.*)"|([^ "]+)/g);
   var cmd = items.slice(0, 2);
   var args = {};

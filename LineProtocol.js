@@ -30,6 +30,8 @@ module.exports = function(conn) {
 }
 util.inherits(module.exports, stream.Duplex);
 
+module.exports.prototype.debug = false;
+
 module.exports.prototype.options = {
   host: 'localhost',
   port: 0
@@ -46,8 +48,10 @@ module.exports.prototype.reuseConn = function () {
   var self = this;
 
   self.reused = true;
-  self.emit("data", self.receiveBuffer);
-  self.receiveBuffer = "";
+  if (self.receiveBuffer) {
+    self.emit("data", self.receiveBuffer);
+    self.receiveBuffer = "";
+  }
 }
 
 module.exports.prototype.writeLine = function (line) {
@@ -82,14 +86,14 @@ module.exports.prototype.handleData = function (data) {
 module.exports.prototype.handleError = function (data) {
   var self = this;
 
-  console.error([self.localAddress + ":" + self.localPort + ".error", data]);
+  if (self.debug) console.error([self._conn.localAddress + ":" + self._conn.localPort + ".error", data]);
   self.emit("error", data);
 }
 
 module.exports.prototype.handleEnd = function () {
   var self = this;
 
-  console.error([self.localAddress + ":" + self.localPort + ".end", data]);
+  if (self.debug) console.error([self._conn.localAddress + ":" + self._conn.localPort + ".end", data]);
   self.push(null);
 }
 
