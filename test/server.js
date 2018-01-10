@@ -1,10 +1,12 @@
-var i2p = require("i2p");
+const i2p = require("../");
 
 
-var server = i2p.createServer();
+const server = i2p.createServer();
 server.on('listening', function () {
   console.log("server.listening: " + server.session.DESTINATION);
 });
+
+// On new incoming client connection
 server.on('connection', function (socket) {
   console.log("server.connection: " + socket.DESTINATION);
 

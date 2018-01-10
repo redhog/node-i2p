@@ -1,6 +1,6 @@
-var i2p = require("i2p");
-var Session = require("../Session");
-var Connection = require("../Connection");
+const i2p = require("../");
+const Session = require("../Session");
+const Connection = require("../Connection");
 
 function setupClient(server) {
   var count = 0;

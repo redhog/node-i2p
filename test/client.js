@@ -1,5 +1,5 @@
-var Session = require("../Session");
-var Connection = require("../Connection");
+const Session = require("../Session");
+const Connection = require("../Connection");
 
 client = new Connection();
 client.on('connect', function () {
