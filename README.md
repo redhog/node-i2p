@@ -30,7 +30,7 @@ Server usage:
         console.log("Received: " + data.toString("utf-8"));
       });
 
-      socket.write("Hello client\n");
+      client.write("Hello client\n");
     });
 
     server.listen({});

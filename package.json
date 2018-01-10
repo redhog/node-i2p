@@ -1,7 +1,7 @@
 {
   "name": "i2p",
   "description": "i2p SAM bindings",
-  "version": "3.0.5",
+  "version": "3.1.0",
   "homepage": "http://github.com/redhog/node-i2p",
   "author": {
     "name": "RedHog",
