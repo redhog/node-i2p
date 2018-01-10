@@ -1,4 +1,4 @@
-var Session = require("./Session");
+const Session = require("./Session");
 
 function SessionManager() {
   var self = this;

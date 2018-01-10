@@ -1,11 +1,11 @@
-var net = require('net');
-var util = require('util');
-var events = require("events");
-var uuid = require("node-uuid");
-var i2putil = require("./i2putil");
+const net = require('net'),
+      util = require('util'),
+      events = require('events'),
+      uuid = require('uuid');
+const i2putil = require("./i2putil");
 
-var BaseConnection = require("./BaseConnection");
-var SessionManager = require("./SessionManager");
+const BaseConnection = require("./BaseConnection");
+const SessionManager = require("./SessionManager");
 
 
 

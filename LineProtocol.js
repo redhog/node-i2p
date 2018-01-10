@@ -1,9 +1,9 @@
-var net = require('net');
-var util = require('util');
-var events = require("events");
-var stream = require("stream");
-var uuid = require("node-uuid");
-var i2putil = require("./i2putil");
+const net = require('net'),
+      util = require('util'),
+      events = require('events'),
+      uuid = require('uuid'),
+      stream = require('stream');
+const i2putil = require("./i2putil");
 
 
 module.exports = function(conn) {
