@@ -1,10 +1,10 @@
-var net = require('net');
-var util = require('util');
-var events = require("events");
-var uuid = require("node-uuid");
-var i2putil = require("./i2putil");
+const net = require('net'),
+      util = require('util'),
+      events = require('events'),
+      uuid = require('uuid');
+const i2putil = require("./i2putil");
 
-var LineProtocol = require("./LineProtocol");
+const LineProtocol = require("./LineProtocol");
 
 
 module.exports = function(conn, connectedCb) {

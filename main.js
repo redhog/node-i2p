@@ -1,9 +1,10 @@
-var net = require('net');
-var util = require('util');
-var events = require("events");
-var uuid = require("node-uuid");
-var Server = require("./Server");
-var Connection = require("./Connection");
+const net = require('net'),
+      util = require('util'),
+      events = require('events'),
+      uuid = require('uuid');
+
+const Server = require("./Server");
+const Connection = require("./Connection");
 
 module.exports.createConnection = function(options, cb) {
   var connection = new Connection();

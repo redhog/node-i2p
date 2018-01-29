@@ -1,11 +1,12 @@
-var net = require('net');
-var util = require('util');
-var events = require("events");
-var uuid = require("node-uuid");
-var i2putil = require("./i2putil");
+const net = require('net'),
+      util = require('util'),
+      events = require('events'),
+      uuid = require('uuid');
 
-var BaseServer = require("./BaseServer");
-var SessionManager = require("./SessionManager");
+const i2putil = require("./i2putil");
+
+const BaseServer = require("./BaseServer");
+const SessionManager = require("./SessionManager");
 
 module.exports = function() {
   var self = this;

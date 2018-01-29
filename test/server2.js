@@ -1,9 +1,11 @@
-var net = require("net");
+const net = require("net");
 
-var server = new net.Server();
+const server = new net.Server();
 server.on('listening', function () {
   console.log("server.listening");
 });
+
+// On new incoming client connection
 server.on('connection', function (socket) {
   console.log("server.connection");
 
